@@ -24,23 +24,26 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-
+    
     // Our new settings.
     $settings = new admin_settingpage( 'local_udacity_sync', get_string('settingstitle', 'local_udacity_sync') );
-
+    
     // Course Category list for the drop-down.
     $crsecats = core_course_category::make_categories_list('', 0, ' / ');
 
+    
     // Add a setting field to the settings for this page.
     $settings->add(new admin_setting_configselect(
-        'local_udacity_sync/categorysync',
-        get_string('catsyncprompt', 'local_udacity_sync'),
-        get_string('catsyncdesc', 'local_udacity_sync'),
-        1,
-        $crsecats
+            /* We define the settings name as local_udacity_sync/categorysync, so we can later
+             * retrieve this value by calling get_config(‘local_udacity_sync’, ‘categorysync’) */
+            'local_udacity_sync/categorysync',
+            get_string('catsyncprompt', 'local_udacity_sync'),
+            get_string('catsyncdesc', 'local_udacity_sync'),
+            1,
+            $crsecats
         )
     );
-
+    
     // Add to the admin settings for localplugins.
     $ADMIN->add( 'localplugins', $settings);
 }

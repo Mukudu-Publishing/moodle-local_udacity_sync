@@ -29,66 +29,50 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->dirroot . '/course/lib.php');
 
-/**
- * The udacitysync scheduled task class.
- *
- * @package   local_udacity_sync
- * @copyright 2019 - 2021 Mukudu Ltd - Bham UK
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class udacitysync extends \core\task\scheduled_task {
-
+    
     /** @var string $apiurl - the REST endpoint */
     private $apiurl = 'https://www.udacity.com/public-api/v1/courses';
-
+    
     /** @var string $testingfile - the local file for testing */
     private $testingfile = __DIR__ . '/catalog.json';
-
+    
     /** @var string $track - the course tracks to sync */
     private $track = 'Web Development';
-
-    /**
-     * Get a descriptive name for this task (shown to admins).
-     *
-     * @return string
-     */
+    
     public function get_name() {
         return get_string('taskname', 'local_udacity_sync');
     }
-
-    /**
-     * Do the job.
-     *
-     * Throw exceptions on errors (the job will be retried).
-     * @param mixed $testing - if this is a test run.
-     */
+    
     public function execute($testing = null) {
         global $DB;
-
+        
         $catlog = null;
-
+        
+        // Course Category to synchronise - check if it exists.
+        if (!$synccategory = get_config('local_udacity_sync', 'categorysync')) {
+            print_error('errornosetting', 'local_udacity_sync');
+        }
+        
         if (isset($testing)) {
             // Check if we have a local JSON file and read that instead - saves on API calls.
             if (file_exists($this->testingfile)) {
                 $catlog = json_decode(
                     file_get_contents($this->testingfile));
                 if ($catlog === null) {
-                    print_error('errorjsonparse',
-                        'local_udacity_sync',
-                        null,
-                        $this->get_last_json_errormsg());
+                    print_error('errorjsonparse', 'local_udacity_sync', null, $this->get_last_json_errormsg());
                 }
             } // Else we are using curl to get data.
             $testing = true;
         } else {
             $testing = false;
         }
-
+        
         if (empty($catlog)) {  //
             // Moodle's RESTful cURL class.
             $c = new \curl(array('cache' => $testing));  // Use cache - not when developing :).
             $requestparams = array();   // No params req.
-
+            
             if ($response = $c->get($this->apiurl, $requestparams)) {   // HTTP GET Method.
                 if (($catlog = json_decode($response)) === null) {
                     print_error('Unable to parse file');
@@ -105,10 +89,7 @@ class udacitysync extends \core\task\scheduled_task {
                 }
             }
         }
-
-        // Course Category to synchronise.
-        $synccategory = get_config('local_udacity_sync', 'categorysync');
-
+        
         foreach ($catlog->courses as $catcourse) {
             if (!empty($catcourse->tracks)) {
                 if (in_array($this->track, $catcourse->tracks)) {
@@ -121,7 +102,7 @@ class udacitysync extends \core\task\scheduled_task {
                     // Add the course image to the summary - being clever.
                     $record->summary .= "\n![alt text]("  . $catcourse->image . ' "' . $record->shortname . '")';
                     $record->summaryformat = FORMAT_MARKDOWN;
-
+                    
                     // Have we got an existing record?
                     if ($course = $DB->get_record('course', array('idnumber' => $catcourse->key))) {
                         // Test if anything has changed.
@@ -142,7 +123,7 @@ class udacitysync extends \core\task\scheduled_task {
                         } else {
                             $updaterequired = true;
                         }
-
+                        
                         if ($updaterequired) {
                             $record->id = $course->id;
                             update_course($record);
@@ -153,8 +134,8 @@ class udacitysync extends \core\task\scheduled_task {
                 }
             }
         }
-
+        
         return true;
     }
-
+    
 }

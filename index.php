@@ -45,7 +45,7 @@ $task = new local_udacity_sync\task\udacitysync();
 echo html_writer::tag('div', html_writer::tag('p', $task->get_name()));
 
 try {
-    $task->execute(1);
+    $task->execute(1); // Note the param!!
 } catch (Exception $e) {
     echo $OUTPUT->notification($e->getMessage(), 'error');
     echo $OUTPUT->footer();

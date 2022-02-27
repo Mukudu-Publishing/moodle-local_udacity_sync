@@ -32,6 +32,7 @@ $string['catsyncdesc'] = 'Select the category for the courses to be syncronised 
 
 $string['taskname'] = 'Udacity Course Sync';
 
+$string['errornosetting'] = 'No Sync Category has been set, please configure plugin';
 $string['errorjsonparse'] = 'Could not parse response: JSON parsing error: "{$a}"';
 $string['errorapicall'] = 'Catalog API Call failed:"{$a}"';
 $string['errorservererror'] = 'Catalog API Call failed.  Server sent : "{$a}"';
